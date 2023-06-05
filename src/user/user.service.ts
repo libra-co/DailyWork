@@ -2,7 +2,7 @@
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-03 15:30:31
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-05 00:53:01
+ * @LastEditTime: 2023-06-05 23:54:38
  * @FilePath: \daily-work\src\user\user.service.ts
  * @Description: 
  */
@@ -10,6 +10,8 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { RegisterDto } from './dto/user.dto';
 import { PrismaService } from 'src/prisima.service';
 import { CommonResult } from 'src/types/common';
+import { User } from '@prisma/client';
+import { Request } from 'express';
 
 @Injectable()
 export class UserService {
@@ -62,23 +64,41 @@ export class UserService {
         }
     }
 
-    async findOneUserByUsername(username: string): Promise<any | undefined> {
-
+    async findOneUserByUsername(username: string): Promise<User | undefined> {
+        try {
+            const user = this.prismaService.user.findFirst({
+                where: { username }
+            })
+            return user
+        } catch (error) {
+            console.log('error', error)
+            throw new HttpException('登录失败内部错误', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 
-    async findOneUserByEmail(email: string): Promise<any | undefined> {
-
+    async findOneUserByEmail(email: string): Promise<User | undefined> {
+        try {
+            const user = this.prismaService.user.findFirst({
+                where: { email }
+            })
+            return user
+        } catch (error) {
+            console.log('error', error)
+            throw new HttpException('登录失败内部错误', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
-    async login(username: string, password: string): Promise<any | undefined> {
-        console.log('username', username)
-        console.log('password', password)
-    }
 
-    async findOneUserMixin(username: string): Promise<any | undefined> {
-        let user
+    async validateUser(username: string): Promise<User> {
+        let user: User | undefined
         user = await this.findOneUserByUsername(username)
         if (!user) {
             user = await this.findOneUserByEmail(username)
         }
+        if (!user) {
+            throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST)
+        }
+        return user
     }
+
+
 }

@@ -31,6 +31,7 @@
     "cookie-parser": "^1.4.6",
     "express-session": "^1.17.3",
     "passport": "^0.6.0",
+    "passport-cookie": "^1.0.9",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0"

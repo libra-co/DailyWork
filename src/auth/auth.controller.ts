@@ -2,7 +2,7 @@
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-04 19:53:06
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-06 00:20:11
+ * @LastEditTime: 2023-06-06 00:37:03
  * @FilePath: \daily-work\src\auth\auth.controller.ts
  * @Description: 
  */
@@ -17,11 +17,9 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   @Post('login')
-  @UseGuards(AuthGuard('local'))
+  // @UseGuards(AuthGuard('local'))
   async login(@Req() req: Request, @Body() body: any): Promise<any | undefined> {
     const token = Buffer.from(`${body.username}:${body.password}`).toString('base64');
-    req.res.cookie(cookieConfig.cookieName, token, cookieConfig.cookie);
-    return this.authService.login(body.username,body.password)
+    return req.res.cookie(cookieConfig.cookieName, token, cookieConfig.cookie);
   }
-
 }

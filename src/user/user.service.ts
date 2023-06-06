@@ -2,7 +2,7 @@
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-03 15:30:31
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-05 23:54:38
+ * @LastEditTime: 2023-06-06 23:56:43
  * @FilePath: \daily-work\src\user\user.service.ts
  * @Description: 
  */
@@ -66,39 +66,26 @@ export class UserService {
 
     async findOneUserByUsername(username: string): Promise<User | undefined> {
         try {
-            const user = this.prismaService.user.findFirst({
+            const user = await this.prismaService.user.findFirst({
                 where: { username }
             })
             return user
         } catch (error) {
             console.log('error', error)
-            throw new HttpException('登录失败内部错误', HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new Error('通过用户名查询用户错误')
         }
     }
 
     async findOneUserByEmail(email: string): Promise<User | undefined> {
         try {
-            const user = this.prismaService.user.findFirst({
+            const user = await this.prismaService.user.findFirst({
                 where: { email }
             })
             return user
         } catch (error) {
             console.log('error', error)
-            throw new HttpException('登录失败内部错误', HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new Error('通过邮箱查询用户错误')
         }
     }
-
-    async validateUser(username: string): Promise<User> {
-        let user: User | undefined
-        user = await this.findOneUserByUsername(username)
-        if (!user) {
-            user = await this.findOneUserByEmail(username)
-        }
-        if (!user) {
-            throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST)
-        }
-        return user
-    }
-
 
 }

@@ -6,7 +6,7 @@
  * @FilePath: \daily-work\src\auth\auth.controller.ts
  * @Description: 
  */
-import { Body, Controller, HttpException, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpException, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
@@ -19,7 +19,7 @@ export class AuthController {
 
   @Post('login')
   // @UseGuards(AuthGuard('local'))
-  async login(@Req() req: Request, @Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto, req)
+  async login(@Req() req: Request, @Body() loginDto: LoginDto, @Res({ passthrough: true }) res) {
+    return this.authService.login(loginDto, res)
   }
 }

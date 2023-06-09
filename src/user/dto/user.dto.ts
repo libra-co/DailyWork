@@ -1,4 +1,4 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
 import { Gender } from "../const";
 
 export class RegisterDto {
@@ -16,5 +16,26 @@ export class RegisterDto {
 
     @IsOptional()
     @IsEnum(Gender, { message: '性别格式不正确' })
+    readonly gender?: Gender
+}
+
+export class UpdateUserInfoDto {
+    @IsUUID()
+    readonly uid: string
+
+    @IsOptional()
+    @IsString()
+    readonly username?: string
+
+    @IsOptional()
+    @IsEmail()
+    readonly email?: string
+
+    @IsOptional()
+    @IsString()
+    readonly password?: string
+
+    @IsOptional()
+    @IsEnum(Gender)
     readonly gender?: Gender
 }

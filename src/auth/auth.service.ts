@@ -1,8 +1,8 @@
 /*
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-03 16:55:28
- * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-07 00:49:49
+ * @LastEditors: liuhongbo liuhongbo@dip-ai.com
+ * @LastEditTime: 2023-06-09 17:37:23
  * @FilePath: \daily-work\src\auth\auth.service.ts
  * @Description: 登录模块
  */
@@ -14,6 +14,9 @@ import { Request } from "express";
 import { cookieConfig } from "./const";
 import { CommonResult } from "src/types/common";
 import { LoginDto } from "./dto/auth.dto";
+import { Response } from "express"
+const crypto = require('crypto');
+
 @Injectable()
 // PassportSerializer 用于序列化用户信息
 export class AuthService {
@@ -21,6 +24,33 @@ export class AuthService {
     private readonly userService: UserService,
   ) { }
 
+  // 加密cookie
+  async encryptCookie(cookie: string) {
+    try {
+      const iv = Buffer.from(crypto.randomBytes(16), 'hex');
+      const cipher = crypto.createCipheriv(cookieConfig.algorithm, cookieConfig.encryptoKey, cookieConfig.encryptoIv);
+
+      let encrypted = cipher.update(cookie);
+      encrypted = Buffer.concat([encrypted, cipher.final()]);
+
+      return `${iv.toString('hex')}.${encrypted.toString('hex')}`;
+
+    } catch (error) {
+      console.log('error', error)
+    }
+  }
+
+  // 解密cookie
+  async decryptCookie(cookie: string) {
+    const [ivHex, encryptedHex] = cookie.split('.');
+    const iv = Buffer.from(ivHex, 'hex');
+    const encrypted = Buffer.from(encryptedHex, 'hex');
+    const decipher = crypto.createDecipheriv(cookieConfig.algorithm, cookieConfig.encryptoKey, cookieConfig.encryptoIv);
+    let decrypted = decipher.update(encrypted);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+    return decrypted.toString();
+  }
 
   async validateUser(username: string, password: string): Promise<User> {
     const validate = (user: User | null) => {
@@ -52,7 +82,7 @@ export class AuthService {
     }
   }
 
-  async login(loginDto: LoginDto, req: Request): Promise<CommonResult<any>> {
+  async login(loginDto: LoginDto, res: Response): Promise<CommonResult<any>> {
     const user = await this.validateUser(loginDto.username, loginDto.password)
     if (!user) {
       return {
@@ -62,8 +92,7 @@ export class AuthService {
       }
     }
     const payload = { username: user.username, sub: user.uid };
-    // req.res.cookie(cookieConfig.name, JSON.stringify(payload), cookieConfig.config)
-    console.log('req.res.cookie',req.res.cookie(cookieConfig.name, JSON.stringify(payload), cookieConfig.config).header('cookie'))
+    res.cookie(cookieConfig.name, this.encryptCookie(user.username), cookieConfig.config as any)
     return {
       code: HttpStatus.OK,
       message: '登录成功',
@@ -72,7 +101,7 @@ export class AuthService {
   }
 
   logout(req: Request) {
-    req.res.clearCookie(cookieConfig.name, cookieConfig.config);
+    req.res.clearCookie(cookieConfig.name, cookieConfig.config as any);
   }
 
 

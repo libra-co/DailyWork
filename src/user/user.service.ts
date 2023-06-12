@@ -2,7 +2,7 @@
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-03 15:30:31
  * @LastEditors: liuhongbo liuhongbo@dip-ai.com
- * @LastEditTime: 2023-06-09 18:15:01
+ * @LastEditTime: 2023-06-12 17:06:44
  * @FilePath: \daily-work\src\user\user.service.ts
  * @Description: 
  */
@@ -32,6 +32,18 @@ export class UserService {
         }
     }
 
+    async checkUsernameIsExist(username: string): Promise<boolean> {
+        try {
+            const user = await this.prismaService.user.findUnique({
+                where: { username }
+            })
+            return !!user
+        } catch (error) {
+            console.log('error', error)
+            throw new HttpException('服务器异常,校验用户名唯一性失败', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
     // 注册
     async register(registerDto: RegisterDto): Promise<CommonResult> {
         // 检测邮箱是否存在
@@ -40,6 +52,14 @@ export class UserService {
             return {
                 code: HttpStatus.BAD_REQUEST,
                 message: '邮箱已存在'
+            }
+        }
+        // 检测用户名是否存在
+        const checkUsernameIsExist = await this.checkUsernameIsExist(registerDto.username)
+        if (checkUsernameIsExist) {
+            return {
+                code: HttpStatus.BAD_REQUEST,
+                message: '用户名已存在'
             }
         }
 

@@ -1,25 +1,24 @@
 /*
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-04 19:53:06
- * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-06 23:27:47
+ * @LastEditors: liuhongbo liuhongbo@dip-ai.com
+ * @LastEditTime: 2023-06-12 17:01:20
  * @FilePath: \daily-work\src\auth\auth.controller.ts
  * @Description: 
  */
-import { Body, Controller, HttpException, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpException, HttpStatus, Post, Req, Request, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
-import { cookieConfig } from './const';
-import { LoginDto } from './dto/auth.dto';
+import { SkipAuth } from './skipAuth';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
+  @SkipAuth()
+  @UseGuards(AuthGuard('local'))
   @Post('login')
-  // @UseGuards(AuthGuard('local'))
-  async login(@Req() req: Request, @Body() loginDto: LoginDto, @Res({ passthrough: true }) res) {
-    return this.authService.login(loginDto, res)
+  async login(@Request() req) {
+    return this.authService.login(req.user);
   }
 }

@@ -1,15 +1,15 @@
 /*
  * @Author: liuhongbo liuhongbo@dip-ai.com
  * @Date: 2023-06-14 15:53:15
- * @LastEditors: liuhongbo liuhongbo@dip-ai.com
- * @LastEditTime: 2023-06-14 19:10:47
+ * @LastEditors: liuhongbo 916196375@qq.com
+ * @LastEditTime: 2023-06-15 14:56:50
  * @FilePath: /DailyWork/src/task/task.service.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Task, User } from '@prisma/client';
 import { PrismaService } from 'src/prisima.service';
-import { DeleteTaskDto, TaskAddDto, TaskListDto, UpdateTaskDto } from './dto/task.dto';
+import { DeleteTaskDto, TaskAddDto, TaskDetailDto, TaskListDto, UpdateTaskDto } from './dto/task.dto';
 import { CommonResult } from 'src/types/common';
 import { checkFinishTimeIsOverStartTime, formatTimeToShanghai, formatTimeToUtc } from 'src/utils/timeUtils';
 
@@ -77,7 +77,7 @@ export class TaskService {
     }
 
     async update(user: User, updateTaskDto: UpdateTaskDto): Promise<CommonResult> {
-        const { taskId } = updateTaskDto
+        const { taskId, isMoveWithChildren, parentTaskId } = updateTaskDto
         const task = await this.prismaService.task.findUnique({
             where: {
                 taskId: taskId
@@ -93,27 +93,91 @@ export class TaskService {
         if ((updateTaskDto.startTime || task.startTime) && (updateTaskDto.finishTime || task.finishTime)) {
             checkFinishTimeIsOverStartTime(updateTaskDto.startTime || formatTimeToShanghai(task.startTime), updateTaskDto.finishTime || formatTimeToShanghai(task.finishTime))
         }
-        try {
-            const updateTask = await this.prismaService.task.update({
+
+        // 移动任务
+        if (parentTaskId) {
+            // 检查目标父级任务是否存在子任务
+            const isTargetChildHasChildren = await this.prismaService.task.findMany({
                 where: {
-                    taskId: taskId
-                },
-                data: formatTimeToShanghai(updateTaskDto)
+                    parentTaskId: parentTaskId
+                }
             })
-            if (!updateTask) {
+            if (isTargetChildHasChildren.length) {
+                throw new HttpException('目标任务存在子任务，移动失败！', HttpStatus.FORBIDDEN)
+            }
+            // 带着子任务一起移动
+            if (!isMoveWithChildren) {
+                // 当前修改任务的子任务
+                const currentChildrenTasks = await this.prismaService.task.findMany({
+                    where: {
+                        parentTaskId: taskId
+                    }
+                })
+                if (currentChildrenTasks.length) {
+                    try {
+                        await this.prismaService.$transaction([
+                            this.prismaService.task.updateMany({
+                                where: {
+                                    OR: currentChildrenTasks.map(task => ({ taskId: task.taskId }))
+                                },
+                                data: {
+                                    parentTaskId: parentTaskId
+                                }
+
+                            }),
+                            this.prismaService.task.update({
+                                where: {
+                                    taskId: taskId,
+                                },
+                                data: { parentTaskId: parentTaskId }
+                            })
+                        ])
+                        return {
+                            code: HttpStatus.OK,
+                            message: '任务修改成功！',
+                            result: null
+                        }
+                    } catch (error) {
+                        console.log('error', error)
+                        throw new HttpException('内部错误，任务修改失败！', HttpStatus.INTERNAL_SERVER_ERROR)
+                    }
+                }
+
+                const result = await this.prismaService.task.update({
+                    where: { taskId: taskId },
+                    data: formatTimeToUtc(updateTaskDto)
+                })
+                if (!result) {
+                    throw new HttpException('内部错误，任务修改失败！', HttpStatus.INTERNAL_SERVER_ERROR)
+                }
+                return {
+                    code: HttpStatus.OK,
+                    message: '任务修改成功！',
+                    result: null
+                }
+            }
+
+            try {
+                const updateTask = await this.prismaService.task.update({
+                    where: {
+                        taskId: taskId
+                    },
+                    data: formatTimeToShanghai(updateTaskDto)
+                })
+                if (!updateTask) {
+                    throw new HttpException('内部错误，任务修改失败！', HttpStatus.INTERNAL_SERVER_ERROR)
+                }
+                return {
+                    code: HttpStatus.OK,
+                    message: '任务修改成功！',
+                    result: null
+                }
+            } catch (error) {
+                console.log('error', error)
                 throw new HttpException('内部错误，任务修改失败！', HttpStatus.INTERNAL_SERVER_ERROR)
             }
-            return {
-                code: HttpStatus.OK,
-                message: '任务修改成功！',
-                result: null
-            }
-        } catch (error) {
-            console.log('error', error)
-            throw new HttpException('内部错误，任务修改失败！', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
-
     async getProjectTaskList(taskListDto: TaskListDto): Promise<CommonResult<Task[]>> {
         try {
             const taskList = await this.prismaService.task.findMany({
@@ -146,6 +210,28 @@ export class TaskService {
         } catch (error) {
             console.log('error', error)
             throw new HttpException('内部错误，任务列表获取失败！', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    async getTaskDetail(taskListDto: TaskDetailDto): Promise<CommonResult<Task>> {
+        const { taskId } = taskListDto
+        try {
+            const task = await this.prismaService.task.findUnique({
+                where: {
+                    taskId: taskId
+                }
+            })
+            if (!task) {
+                throw new HttpException('任务不存在！', HttpStatus.NOT_FOUND)
+            }
+            return {
+                code: HttpStatus.OK,
+                message: '任务详情获取成功！',
+                result: formatTimeToShanghai(task)
+            }
+        } catch (error) {
+            console.log('error', error)
+            throw new HttpException('内部错误，任务详情获取失败！', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 }

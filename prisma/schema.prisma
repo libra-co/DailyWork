@@ -10,6 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 用户
 model User {
   uid       String   @id @default(uuid())
   username  String   @unique
@@ -18,4 +19,35 @@ model User {
   gender    Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// 项目列表
+model ProjectList {
+  projectId   String    @id @default(uuid())
+  projectName String
+  updatedTime DateTime  @updatedAt
+  createdTime DateTime  @default(now())
+  startTime   DateTime  @default(now())
+  finishTime  DateTime?
+  status      Int       @default(0) // ProjectStatusEnum
+  creatorId   String
+  description String?
+}
+
+model Task {
+  taskId       String    @id @default(uuid())
+  taskName     String
+  creatorId    String
+  assigneeId   String // 负责人 id
+  status       Int       @default(0) // TaskStatusEnum
+  priority     Int       @default(0) // TaskPriorityEnum
+  description  String?
+  createdTime  DateTime  @default(now())
+  updatedTime  DateTime  @updatedAt
+  startTime    DateTime  @default(now())
+  finishTime   DateTime?
+  projectId    String
+  parentTaskId String? // 若是子级任务，则为父级任务id
+  isFirstLayer Int       @default(0) // 是否为第一层任务 0 | 1
+  isDeleted    Int       @default(0) // 0 | 1
 }

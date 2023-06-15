@@ -15,9 +15,11 @@ import { AuthModule } from './auth/auth.module';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwtAuthGuard.guard';
+import { ProjectmangementModule } from './project/project.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
-  imports: [UserModule, AuthModule],
+  imports: [UserModule, AuthModule, ProjectmangementModule, TaskModule],
   controllers: [AppController],
   providers: [
     AppService,

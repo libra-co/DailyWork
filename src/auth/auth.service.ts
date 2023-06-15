@@ -2,7 +2,7 @@
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-03 16:55:28
  * @LastEditors: liuhongbo liuhongbo@dip-ai.com
- * @LastEditTime: 2023-06-12 14:30:40
+ * @LastEditTime: 2023-06-13 11:41:16
  * @FilePath: \daily-work\src\auth\auth.service.ts
  * @Description: 登录模块
  */
@@ -12,7 +12,6 @@ import { UserService } from "src/user/user.service";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
-// PassportSerializer 用于序列化用户信息
 export class AuthService {
   constructor(
     private readonly userService: UserService,
@@ -25,32 +24,31 @@ export class AuthService {
         const { password, ...result } = user;
         return result;
       }
-      return null;
+      throw new HttpException('登录失败,密码错误', HttpStatus.BAD_REQUEST);
     }
 
-    try {
-      const validateUserResult = await this.userService.findOneUserByUsername(username);
-      const user = validate(validateUserResult);
-      if (user) {
-        return validateUserResult;
-      } else {
-        const validateUserResult = await this.userService.findOneUserByEmail(username);
-        const user = validate(validateUserResult);
-        if (user) {
-          return validateUserResult;
-        }
-      }
-      return null;
-    } catch (error) {
-      console.log('error', error);
+    const validateUserResult = await this.userService.findOneUserByUsername(username);
+    if (!validateUserResult) {
       throw new HttpException(
-        '登录失败,服务器异常',
+        '登录失败,用户不存在',
         HttpStatus.INTERNAL_SERVER_ERROR
       );
     }
+    const user = validate(validateUserResult);
+    if (user) {
+      return validateUserResult;
+    } else {
+      const validateUserResult = await this.userService.findOneUserByEmail(username);
+      const user = validate(validateUserResult);
+      if (user) {
+        return validateUserResult;
+      }
+    }
+    return null;
+
   }
 
-  
+
   async login(user: User) {
     const payload = { username: user.username, sub: user.uid };
     return {

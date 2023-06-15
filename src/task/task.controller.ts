@@ -27,6 +27,7 @@ export class TaskController {
 
   @Post('update')
   async update(@Req() req, @Body() updateTaskDto: UpdateTaskDto) {
+    console.log('updateTaskDto', updateTaskDto)
     return this.taskService.update(req.user, updateTaskDto);
   }
 

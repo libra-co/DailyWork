@@ -48,6 +48,5 @@ model Task {
   finishTime   DateTime?
   projectId    String
   parentTaskId String? // 若是子级任务，则为父级任务id
-  isFirstLayer Int       @default(0) // 是否为第一层任务 0 | 1
   isDeleted    Int       @default(0) // 0 | 1
 }

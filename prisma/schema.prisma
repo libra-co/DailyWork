@@ -32,6 +32,8 @@ model ProjectList {
   status      Int       @default(0) // ProjectStatusEnum
   creatorId   String
   description String?
+  notion      String? // 备注
+  isDeleted   Int       @default(0) // 0 | 1
 }
 
 model Task {
@@ -40,13 +42,22 @@ model Task {
   creatorId    String
   assigneeId   String // 负责人 id
   status       Int       @default(0) // TaskStatusEnum
-  priority     Int       @default(0) // TaskPriorityEnum
-  description  String?
+  order        Int       @default(0) // TaskPriorityEnum
+  description  String?   @default("")
   createdTime  DateTime  @default(now())
   updatedTime  DateTime  @updatedAt
   startTime    DateTime  @default(now())
   finishTime   DateTime?
   projectId    String
-  parentTaskId String? // 若是子级任务，则为父级任务id
+  parentTaskId String?   @default("") // 若是子级任务，则为父级任务id
+  columnId     String // 所属列
+  notion       String? // 备注 
   isDeleted    Int       @default(0) // 0 | 1
+}
+
+model Column {
+  columnId   String @id @default(uuid())
+  columnName String
+  projectId  String
+  order      Int    @default(0) // 顺序
 }

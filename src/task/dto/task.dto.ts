@@ -2,12 +2,13 @@
  * @Author: liuhongbo liuhongbo@dip-ai.com
  * @Date: 2023-06-14 15:54:22
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-15 12:58:08
+ * @LastEditTime: 2023-06-16 23:11:51
  * @FilePath: /DailyWork/src/task/dto/task.dto.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { Allow, IsDateString, IsEnum, IsNumber, IsOptional, IsString } from "class-validator";
 import { TaskStatusEnum } from "../const";
+import { Task } from "@prisma/client";
 
 export class TaskAddDto {
     @IsString()
@@ -81,19 +82,22 @@ export class TaskListDto {
     projectId: string
 }
 
-export class ProjectTaskReturnDto {
-    taskId: string
-    taskName: string
-    status: TaskStatusEnum
-    startTime: string
-    finishTime: string
-    parentTaskId: string
-    description: string
-    creatorId: string
-    assigneeId: string
-    projectId: string
-    createdAt: string
-    updatedAt: string
+export interface ProjectTaskReturnDto  {
+    taskId: string;
+    taskName: string;
+    creatorId: string;
+    assigneeId: string;
+    status: number;
+    order: number;
+    description: string | null;
+    createdTime: Date;
+    updatedTime: Date;
+    startTime: Date;
+    finishTime: Date | null;
+    projectId: string;
+    parentTaskId: string | null;
+    columnId: string;
+    isDeleted: number;
     children: ProjectTaskReturnDto[]
 }
 

@@ -1,8 +1,8 @@
 /*
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-03 16:55:28
- * @LastEditors: liuhongbo liuhongbo@dip-ai.com
- * @LastEditTime: 2023-06-13 11:41:16
+ * @LastEditors: liuhongbo 916196375@qq.com
+ * @LastEditTime: 2023-06-16 17:48:02
  * @FilePath: \daily-work\src\auth\auth.service.ts
  * @Description: 登录模块
  */
@@ -10,6 +10,7 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { User } from "@prisma/client";
 import { UserService } from "src/user/user.service";
 import { JwtService } from "@nestjs/jwt";
+import { CommonResult } from "src/types/common";
 
 @Injectable()
 export class AuthService {
@@ -49,10 +50,12 @@ export class AuthService {
   }
 
 
-  async login(user: User) {
+  async login(user: User): Promise<CommonResult<{ token: string }>> {
     const payload = { username: user.username, sub: user.uid };
     return {
-      access_token: this.jwtService.sign(payload),
+      code: HttpStatus.OK,
+      message: '登录成功',
+      result: { token: this.jwtService.sign(payload) }
     };
   }
 

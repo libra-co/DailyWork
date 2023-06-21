@@ -17,9 +17,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwtAuthGuard.guard';
 import { ProjectmangementModule } from './project/project.module';
 import { TaskModule } from './task/task.module';
+import { ColumnModule } from './column/column.module';
 
 @Module({
-  imports: [UserModule, AuthModule, ProjectmangementModule, TaskModule],
+  imports: [UserModule, AuthModule, ProjectmangementModule, TaskModule, ColumnModule],
   controllers: [AppController],
   providers: [
     AppService,

@@ -12,6 +12,7 @@ import { PrismaService } from 'src/prisima.service';
 import { CommonResult } from 'src/types/common';
 import { User } from '@prisma/client';
 import { Request } from 'express';
+import { formatTimeToShanghai } from 'src/utils/timeUtils';
 
 @Injectable()
 export class UserService {
@@ -131,7 +132,7 @@ export class UserService {
         try {
             const user = await this.prismaService.user.update({
                 where: { uid: updateUserInfoDto.uid },
-                data: updateUserInfoDto
+                data: formatTimeToShanghai(updateUserInfoDto)
             })
             return {
                 code: HttpStatus.OK,

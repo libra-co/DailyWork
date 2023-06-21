@@ -1,8 +1,8 @@
 /*
  * @Author: liuhongbo liuhongbo@dip-ai.com
  * @Date: 2023-06-14 15:53:15
- * @LastEditors: liuhongbo liuhongbo@dip-ai.com
- * @LastEditTime: 2023-06-21 18:20:32
+ * @LastEditors: liuhongbo 916196375@qq.com
+ * @LastEditTime: 2023-06-21 23:36:01
  * @FilePath: /DailyWork/src/task/task.service.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -198,10 +198,10 @@ export class TaskService {
                              */
                             const generateChildrenTaskData = async (tasks, index: number) => {
                                 await Promise.all(currentTaskTree.children.map(async task => {
-                                    prisma.task.update({
+                                    await prisma.task.update({
                                         where: { taskId: task.taskId },
                                         data: {
-                                            columnId: projectColumns[index].columnId
+                                            columnId: projectColumns[index + 1].columnId
                                         }
                                     })
                                     if (task.children) {
@@ -211,7 +211,7 @@ export class TaskService {
                                 })
                                 )
                             }
-                            const childrenTaskData = await generateChildrenTaskData(currentTaskTree, projectColumns.findIndex(column => column.columnId === targetParentTask.columnId))
+                            const childrenTaskData = await generateChildrenTaskData(currentTaskTree, projectColumns.findIndex(column => column.columnId === targetParentTask.columnId) + 1)
                         })
                         await this.columnService.checkAndDeleteEmptyColumn(task.projectId)
                         return successReturn
@@ -231,7 +231,7 @@ export class TaskService {
                              */
                             const generateChildrenTaskData = async (tasks, index: number) => {
                                 await Promise.all(currentTaskTree.children.map(async task => {
-                                    prisma.task.update({
+                                    await prisma.task.update({
                                         where: { taskId: task.taskId },
                                         data: {
                                             columnId: projectColumns[index].columnId
@@ -244,9 +244,9 @@ export class TaskService {
                                 })
                                 )
                             }
-                            const childrenTaskData = await generateChildrenTaskData(currentTaskTree.children, projectColumns.findIndex(column => column.columnId === task.columnId))
+                            const childrenTaskData = await generateChildrenTaskData(currentTaskTree.children, projectColumns.findIndex(column => column.columnId === task.columnId) + 1)
 
-                            prisma.task.update({
+                            await prisma.task.update({
                                 where: {
                                     taskId: taskId,
                                 },
@@ -265,14 +265,14 @@ export class TaskService {
             // 如果移动时,任务没有子任务,则直接移动
             try {
                 const result = await this.prismaService.$transaction(async (prisma) => {
-                    prisma.task.update({
+                    await prisma.task.update({
                         where: {
                             taskId: taskId
                         },
                         data: {
-                            ...updateData,
+                            ...formatTimeToUtc(updateData),
                             parentTaskId: parentTaskId,
-                            columnId: targetParentTask.columnId
+                            columnId: projectColumns.at(projectColumns.findIndex(column => column.columnId === targetParentTask.columnId) + 1).columnId
                         }
                     })
                 })

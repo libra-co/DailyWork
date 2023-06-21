@@ -2,14 +2,14 @@
  * @Author: liuhongbo 916196375@qq.com
  * @Date: 2023-06-15 11:43:46
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-15 12:05:42
+ * @LastEditTime: 2023-06-21 23:21:49
  * @FilePath: \daily-work\src\task\task.controller.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { Body, Controller, Get, Post, Query, Req, Request } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { User } from '@prisma/client';
-import { DeleteTaskDto, TaskAddDto, TaskListDto, UpdateTaskDto } from './dto/task.dto';
+import { DeleteTaskDto, TaskAddDto, TaskDetailDto, TaskListDto, UpdateTaskDto } from './dto/task.dto';
 
 @Controller('task')
 export class TaskController {
@@ -27,7 +27,6 @@ export class TaskController {
 
   @Post('update')
   async update(@Req() req, @Body() updateTaskDto: UpdateTaskDto) {
-    console.log('updateTaskDto', updateTaskDto)
     return this.taskService.update(req.user, updateTaskDto);
   }
 
@@ -37,8 +36,8 @@ export class TaskController {
   }
 
   @Get('detail')
-  async detail(@Query() taskListDto: TaskListDto) {
-    return this.taskService.getProjectTaskList(taskListDto);
+  async detail(@Query() taskListDto: TaskDetailDto) {
+    return this.taskService.getTaskDetail(taskListDto);
   }
 
 }

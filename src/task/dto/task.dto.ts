@@ -2,7 +2,7 @@
  * @Author: liuhongbo liuhongbo@dip-ai.com
  * @Date: 2023-06-14 15:54:22
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-16 23:11:51
+ * @LastEditTime: 2023-06-22 16:01:09
  * @FilePath: /DailyWork/src/task/dto/task.dto.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -36,6 +36,9 @@ export class TaskAddDto {
     @IsOptional()
     @IsString()
     description?: string
+
+    @IsOptional()
+    customItemList?: { key?: string, value?: string }[][]
 }
 
 export class DeleteTaskDto {
@@ -75,6 +78,9 @@ export class UpdateTaskDto {
     @IsOptional()
     @IsNumber()
     isMoveWithChildren?: 0 | 1  // 是否移动时带着子任务 0: 不移动 1: 移动
+
+    @IsOptional()
+    customItemList?: { key?: string, value?: string }[][] | string
 }
 
 export class TaskListDto {
@@ -82,7 +88,7 @@ export class TaskListDto {
     projectId: string
 }
 
-export interface ProjectTaskReturnDto  {
+export interface ProjectTaskReturnDto {
     taskId: string;
     taskName: string;
     creatorId: string;
@@ -99,6 +105,7 @@ export interface ProjectTaskReturnDto  {
     columnId: string;
     isDeleted: number;
     children: ProjectTaskReturnDto[]
+    customItemList?: { key?: string, value?: string }[][]
 }
 
 export class TaskDetailDto {

@@ -2,7 +2,7 @@
  * @Author: liuhongbo liuhongbo@dip-ai.com
  * @Date: 2023-06-12 17:52:54
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-15 14:22:36
+ * @LastEditTime: 2023-06-22 17:37:53
  * @FilePath: /DailyWork/src/projectMangement/projectmangement.service.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -12,11 +12,15 @@ import { PrismaService } from 'src/prisima.service';
 import { AddProjectDto, DeleteProjectDto, UpdateProjectDto } from './dto/project.dto';
 import { CommonResult } from 'src/types/common';
 import { checkFinishTimeIsOverStartTime, formatTimeToShanghai, formatTimeToUtc } from 'src/utils/timeUtils';
+import { TaskService } from 'src/task/task.service';
+import { ColumnService } from 'src/column/column.service';
 
 @Injectable()
 export class ProjectmangementService {
     constructor(
-        private readonly prismaService: PrismaService
+        private readonly prismaService: PrismaService,
+        private readonly taskService: TaskService,
+        private readonly columnService: ColumnService,
     ) { }
 
     async add(user: User, addProjectDto: AddProjectDto): Promise<CommonResult> {
@@ -71,9 +75,13 @@ export class ProjectmangementService {
                     projectId: projectId
                 }
             })
+
             if (!deleteProject) {
                 throw new HttpException('内部错误,项目删除失败!，项目删除失败！', HttpStatus.INTERNAL_SERVER_ERROR)
             }
+            // 清除项目下的任务和列
+            this.taskService.clearProjectTask(projectId)
+            this.columnService.clearProjectColumn(projectId)
             return {
                 code: HttpStatus.OK,
                 message: '项目删除成功!',
@@ -89,7 +97,17 @@ export class ProjectmangementService {
         const projectList = await this.prismaService.projectList.findMany({
             where: {
                 creatorId: user.uid
-            }
+            },
+            select: {
+                projectId: true,
+                projectName: true,
+                startTime: true,
+                finishTime: true,
+                status: true,
+                description: true,
+                notion: true,
+            },
+            orderBy: { createdTime: 'asc' }
         })
         const result = projectList.map((item) => formatTimeToShanghai(item))
         return {
@@ -145,7 +163,4 @@ export class ProjectmangementService {
         })
         return project
     }
-
-
-
 }

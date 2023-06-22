@@ -10,9 +10,11 @@ import { Module } from '@nestjs/common';
 import { ProjectmangementService } from './project.service';
 import { ProjectmangementController } from './project.controller';
 import { PrismaService } from 'src/prisima.service';
+import { TaskService } from 'src/task/task.service';
+import { ColumnService } from 'src/column/column.service';
 
 @Module({
   controllers: [ProjectmangementController],
-  providers: [ProjectmangementService, PrismaService]
+  providers: [ProjectmangementService, PrismaService,TaskService,ColumnService]
 })
 export class ProjectmangementModule { }

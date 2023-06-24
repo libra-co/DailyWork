@@ -2,7 +2,7 @@
  * @Author: liuhongbo liuhongbo@dip-ai.com
  * @Date: 2023-06-14 15:53:15
  * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-22 17:41:15
+ * @LastEditTime: 2023-06-24 20:21:09
  * @FilePath: /DailyWork/src/task/task.service.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -184,6 +184,9 @@ export class TaskService {
             const targetParentTask = await this.prismaService.task.findUnique({
                 where: { taskId: parentTaskId }
             })
+            if (!targetParentTask) {
+                throw new HttpException('更新失败,父任务不存在！', HttpStatus.NOT_FOUND)
+            }
             // 项目下的所有列
             const projectColumns = await this.prismaService.column.findMany({
                 where: { projectId: task.projectId }
@@ -274,6 +277,7 @@ export class TaskService {
                 }
                 // 如果移动时,任务没有子任务,则直接移动
                 try {
+                    console.log('targetParentTask', targetParentTask) // null
                     const targetParentTaskColumnIndex = projectColumns.findIndex(column => column.columnId === targetParentTask.columnId)
                     // 是否需要创建新的列
                     if (projectColumns.length <= targetParentTaskColumnIndex + 1) {
@@ -338,6 +342,19 @@ export class TaskService {
                 },
                 orderBy: {
                     createdTime: 'asc'
+                },
+                select: {
+                    taskId: true,
+                    taskName: true,
+                    status: true,
+                    order: true,
+                    description: true,
+                    startTime: true,
+                    finishTime: true,
+                    parentTaskId: true,
+                    columnId: true,
+                    notion: true,
+                    customItemList: true,
                 }
             })).map(task => {
                 if ('customItemList' in task) {
@@ -355,6 +372,19 @@ export class TaskService {
                         },
                         orderBy: {
                             createdTime: 'asc'
+                        },
+                        select: {
+                            taskId: true,
+                            taskName: true,
+                            status: true,
+                            order: true,
+                            description: true,
+                            startTime: true,
+                            finishTime: true,
+                            parentTaskId: true,
+                            columnId: true,
+                            notion: true,
+                            customItemList: true,
                         }
                     })).map(task => {
                         if ('customItemList' in task) {
@@ -363,12 +393,12 @@ export class TaskService {
                         return task
                     })
                     if (childrenTasks.length > 0) {
-                        task.children = await searchChildrenTask(childrenTasks)
+                        task.children = await searchChildrenTask(childrenTasks as Task[])
                     }
                     return task
                 }))
             }
-            const result = taskList.length === 0 ? [] : await searchChildrenTask(taskList)
+            const result = taskList.length === 0 ? [] : await searchChildrenTask(taskList as Task[])
             return {
                 code: HttpStatus.OK,
                 message: '任务列表获取成功！',
@@ -399,6 +429,19 @@ export class TaskService {
                         where: {
                             parentTaskId: task.taskId
                         },
+                        select: {
+                            taskId: true,
+                            taskName: true,
+                            status: true,
+                            order: true,
+                            description: true,
+                            startTime: true,
+                            finishTime: true,
+                            parentTaskId: true,
+                            columnId: true,
+                            notion: true,
+                            customItemList: true,
+                        }
                     })).map(task => {
                         if ('customItemList' in task) {
                             task.customItemList = JSON.parse(task.customItemList as unknown as string)
@@ -430,6 +473,19 @@ export class TaskService {
             const task = await this.prismaService.task.findUnique({
                 where: {
                     taskId: taskId
+                },
+                select: {
+                    taskId: true,
+                    taskName: true,
+                    status: true,
+                    order: true,
+                    description: true,
+                    startTime: true,
+                    finishTime: true,
+                    parentTaskId: true,
+                    columnId: true,
+                    notion: true,
+                    customItemList: true,
                 }
             })
             if (!task) {

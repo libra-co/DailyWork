@@ -22,7 +22,7 @@ model User {
 }
 
 // 项目列表
-model ProjectList {
+model Project {
   projectId   String    @id @default(uuid())
   projectName String
   updatedTime DateTime  @updatedAt
@@ -34,6 +34,7 @@ model ProjectList {
   description String?
   notion      String? // 备注
   isDeleted   Int       @default(0) // 0 | 1
+  order       Int       @default(0) // 排序
 }
 
 model Task {
@@ -61,4 +62,15 @@ model Column {
   columnName String
   projectId  String
   order      Int    @default(0) // 顺序
+}
+
+model Notion {
+  notionId   String   @id @default(uuid())
+  projectId  String
+  title      String
+  order      Int      @default(0)
+  content    String // 内容
+  updateTime DateTime @updatedAt
+  createTime DateTime @default(now())
+  creatorId  String
 }

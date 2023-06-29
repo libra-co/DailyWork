@@ -12,9 +12,10 @@ import { ProjectmangementController } from './project.controller';
 import { PrismaService } from 'src/prisima.service';
 import { TaskService } from 'src/task/task.service';
 import { ColumnService } from 'src/column/column.service';
+import { NotionService } from 'src/notion/notion.service';
 
 @Module({
   controllers: [ProjectmangementController],
-  providers: [ProjectmangementService, PrismaService,TaskService,ColumnService]
+  providers: [ProjectmangementService, PrismaService,TaskService,ColumnService,NotionService]
 })
 export class ProjectmangementModule { }

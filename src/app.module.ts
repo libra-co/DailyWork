@@ -18,9 +18,10 @@ import { JwtAuthGuard } from './auth/jwtAuthGuard.guard';
 import { ProjectmangementModule } from './project/project.module';
 import { TaskModule } from './task/task.module';
 import { ColumnModule } from './column/column.module';
+import { NotionModule } from './notion/notion.module';
 
 @Module({
-  imports: [UserModule, AuthModule, ProjectmangementModule, TaskModule, ColumnModule],
+  imports: [UserModule, AuthModule, ProjectmangementModule, TaskModule, ColumnModule, NotionModule],
   controllers: [AppController],
   providers: [
     AppService,

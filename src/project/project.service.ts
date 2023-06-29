@@ -1,19 +1,20 @@
 /*
  * @Author: liuhongbo liuhongbo@dip-ai.com
  * @Date: 2023-06-12 17:52:54
- * @LastEditors: liuhongbo 916196375@qq.com
- * @LastEditTime: 2023-06-22 17:37:53
+ * @LastEditors: liuhongbo liuhongbo@dip-ai.com
+ * @LastEditTime: 2023-06-28 17:23:25
  * @FilePath: /DailyWork/src/projectMangement/projectmangement.service.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { ProjectList, User } from '@prisma/client';
+import { Project, User } from '@prisma/client';
 import { PrismaService } from 'src/prisima.service';
-import { AddProjectDto, DeleteProjectDto, UpdateProjectDto } from './dto/project.dto';
+import { AddProjectDto, DeleteProjectDto, OrderProjectDto, ProjectDetailDto, UpdateProjectDto } from './dto/project.dto';
 import { CommonResult } from 'src/types/common';
 import { checkFinishTimeIsOverStartTime, formatTimeToShanghai, formatTimeToUtc } from 'src/utils/timeUtils';
 import { TaskService } from 'src/task/task.service';
 import { ColumnService } from 'src/column/column.service';
+import { NotionService } from 'src/notion/notion.service';
 
 @Injectable()
 export class ProjectmangementService {
@@ -21,6 +22,7 @@ export class ProjectmangementService {
         private readonly prismaService: PrismaService,
         private readonly taskService: TaskService,
         private readonly columnService: ColumnService,
+        private readonly notionService: NotionService,
     ) { }
 
     async add(user: User, addProjectDto: AddProjectDto): Promise<CommonResult> {
@@ -33,12 +35,16 @@ export class ProjectmangementService {
         if (addProjectDto.startTime && addProjectDto.finishTime) {
             checkFinishTimeIsOverStartTime(addProjectDto.startTime, addProjectDto.finishTime)
         }
-        const newProjectData: any = {
+        const projectNum = await this.prismaService.project.count({
+            where: { creatorId: user.uid }
+        })
+        const newProjectData = {
             creatorId: user.uid,
             ...formatTimeToUtc(addProjectDto),
+            order: projectNum
         }
         try {
-            const newProject = await this.prismaService.projectList.create({
+            const newProject = await this.prismaService.project.create({
                 data: newProjectData
             })
             if (!newProject) {
@@ -57,7 +63,7 @@ export class ProjectmangementService {
 
     async delete(user: User, deleteProjectDto: DeleteProjectDto): Promise<CommonResult> {
         const { projectId } = deleteProjectDto
-        const project = await this.prismaService.projectList.findUnique({
+        const project = await this.prismaService.project.findUnique({
             where: {
                 projectId: projectId
             }
@@ -70,18 +76,21 @@ export class ProjectmangementService {
         }
 
         try {
-            const deleteProject = await this.prismaService.projectList.delete({
-                where: {
-                    projectId: projectId
-                }
-            })
+            this.prismaService.$transaction(async (prisma) => {
+                const deleteProject = await prisma.project.delete({
+                    where: {
+                        projectId: projectId
+                    }
+                })
 
-            if (!deleteProject) {
-                throw new HttpException('内部错误,项目删除失败!，项目删除失败！', HttpStatus.INTERNAL_SERVER_ERROR)
-            }
-            // 清除项目下的任务和列
-            this.taskService.clearProjectTask(projectId)
-            this.columnService.clearProjectColumn(projectId)
+                if (!deleteProject) {
+                    throw new HttpException('内部错误,项目删除失败!，项目删除失败！', HttpStatus.INTERNAL_SERVER_ERROR)
+                }
+                // 清除项目下的task, column, notion
+                this.taskService.clearProjectTask(projectId)
+                this.columnService.clearProjectColumn(projectId)
+                this.notionService.clearProjectNotion({ projectId })
+            })
             return {
                 code: HttpStatus.OK,
                 message: '项目删除成功!',
@@ -93,8 +102,8 @@ export class ProjectmangementService {
         }
     }
 
-    async list(user: User): Promise<CommonResult<ProjectList[]>> {
-        const projectList = await this.prismaService.projectList.findMany({
+    async list(user: User): Promise<CommonResult<Project[]>> {
+        const projectList = await this.prismaService.project.findMany({
             where: {
                 creatorId: user.uid
             },
@@ -106,8 +115,11 @@ export class ProjectmangementService {
                 status: true,
                 description: true,
                 notion: true,
+                order: true
             },
-            orderBy: { createdTime: 'asc' }
+            orderBy: {
+                order: 'asc',
+            }
         })
         const result = projectList.map((item) => formatTimeToShanghai(item))
         return {
@@ -119,7 +131,7 @@ export class ProjectmangementService {
 
     async update(user: User, updateProjectDto: UpdateProjectDto): Promise<CommonResult> {
         const { projectId, projectName, startTime, finishTime } = updateProjectDto
-        const project = await this.prismaService.projectList.findUnique({
+        const project = await this.prismaService.project.findUnique({
             where: { projectId }
         })
         if (!project) {
@@ -133,7 +145,7 @@ export class ProjectmangementService {
             checkFinishTimeIsOverStartTime(startTime || formatTimeToShanghai(project.startTime), finishTime || formatTimeToShanghai(project.finishTime))
         }
         try {
-            const updateProject = await this.prismaService.projectList.update({
+            const updateProject = await this.prismaService.project.update({
                 where: { projectId },
                 data: formatTimeToUtc(updateProjectDto)
 
@@ -150,17 +162,66 @@ export class ProjectmangementService {
             console.log('error', error)
             throw new HttpException('内部错误，项目修改失败！', HttpStatus.INTERNAL_SERVER_ERROR)
         }
-
     }
 
     // 根据项目名称查询项目
-    async findProjectByName(uid: string, projectName: string): Promise<ProjectList> {
-        const project = await this.prismaService.projectList.findFirst({
+    async findProjectByName(uid: string, projectName: string): Promise<Project> {
+        const project = await this.prismaService.project.findFirst({
             where: {
                 creatorId: uid,
                 projectName: projectName,
             }
         })
         return project
+    }
+
+    async order(orderProjectDto: OrderProjectDto): Promise<CommonResult> {
+        const { projectIds } = orderProjectDto
+        try {
+            await this.prismaService.$transaction(async (prisma) => {
+                const updateData = await Promise.all(projectIds.map(async (item, index) => {
+                    await prisma.project.update({
+                        where: { projectId: item },
+                        data: { order: index }
+                    })
+                })
+                )
+            })
+            return {
+                code: HttpStatus.OK,
+                message: '排序成功!',
+                result: null
+            }
+        } catch (error) {
+            console.log('error', error)
+            throw new HttpException('内部错误，排序失败！', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    async detail(projectDetailDto: ProjectDetailDto): Promise<CommonResult<Project>> {
+        const { projectId } = projectDetailDto
+        try {
+            const result = await this.prismaService.project.findUnique({
+                where: { projectId },
+                select: {
+                    projectId: true,
+                    projectName: true,
+                    startTime: true,
+                    finishTime: true,
+                    status: true,
+                    description: true,
+                    notion: true,
+                    order: true
+                },
+            })
+            return {
+                code: HttpStatus.OK,
+                message: '查询成功!',
+                result: formatTimeToShanghai(result)
+            }
+        } catch (error) {
+            console.log('error', error)
+            throw new HttpException('内部错误，查询失败！', HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 }

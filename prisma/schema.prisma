@@ -69,7 +69,7 @@ model Notion {
   projectId  String
   title      String
   order      Int      @default(0)
-  content    String // 内容
+  content    String   @default("") // 内容
   updateTime DateTime @updatedAt
   createTime DateTime @default(now())
   creatorId  String

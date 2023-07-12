@@ -19,6 +19,7 @@ model User {
   gender    Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isDelete  Int      @default(0)
 }
 
 // 项目列表
@@ -27,6 +28,7 @@ model Project {
   projectName String
   updatedTime DateTime  @updatedAt
   createdTime DateTime  @default(now())
+  updateTime  DateTime  @updatedAt
   startTime   DateTime  @default(now())
   finishTime  DateTime?
   status      Int       @default(0) // ProjectStatusEnum
@@ -35,6 +37,7 @@ model Project {
   notion      String? // 备注
   isDeleted   Int       @default(0) // 0 | 1
   order       Int       @default(0) // 排序
+  isDelete    Int       @default(0)
 }
 
 model Task {
@@ -47,7 +50,7 @@ model Task {
   description    String?   @default("")
   createdTime    DateTime  @default(now())
   updatedTime    DateTime  @updatedAt
-  startTime      DateTime  @default(now())
+  startTime      DateTime?
   finishTime     DateTime?
   projectId      String
   parentTaskId   String?   @default("") // 若是子级任务，则为父级任务id
@@ -55,13 +58,16 @@ model Task {
   notion         String? // 备注 
   isDeleted      Int       @default(0) // 0 | 1
   customItemList String? // 自定义字段
+  isDelete       Int       @default(0)
 }
 
 model Column {
-  columnId   String @id @default(uuid())
-  columnName String
-  projectId  String
-  order      Int    @default(0) // 顺序
+  columnId    String   @id @default(uuid())
+  columnName  String
+  projectId   String
+  order       Int      @default(0) // 顺序
+  updatedTime DateTime @updatedAt
+  isDelete    Int      @default(0)
 }
 
 model Notion {
@@ -73,4 +79,5 @@ model Notion {
   updateTime DateTime @updatedAt
   createTime DateTime @default(now())
   creatorId  String
+  isDelete   Int      @default(0)
 }

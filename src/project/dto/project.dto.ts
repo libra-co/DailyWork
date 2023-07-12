@@ -10,7 +10,7 @@ import { IsArray, IsDateString, IsOptional, IsString } from "class-validator";
 import { ProjectStatusEnum } from "../const";
 
 export class AddProjectDto {
-    @IsString()
+    @IsString({message:'项目名称不能为空！'})
     projectName: string
 
     @IsOptional()
@@ -22,16 +22,16 @@ export class AddProjectDto {
     finishTime?: string
 
     @IsOptional()
-    @IsString()
+    @IsString({message:'项目描述必须为字符串！'})
     description?: string
 
     @IsOptional()
-    @IsString()
+    @IsString({message:'notion必须为字符串！'})
     notion?: string
 }
 
 export class DeleteProjectDto {
-    @IsString()
+    @IsString({message:'projectId不能为空！'})
     projectId: string
 }
 

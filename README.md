@@ -34,6 +34,8 @@ $ pnpm install
 
 ## Running the app
 
+1. create a new file named `.env` in the root directory of the project, witch you can find `.env.sample` as a template.
+
 ```bash
 # development
 $ pnpm run start

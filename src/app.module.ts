@@ -25,7 +25,16 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ScheduleTaskService } from './scheduletask/scheduletask.service';
 
 @Module({
-  imports: [UserModule, AuthModule, ProjectmangementModule, TaskModule, ColumnModule, NotionModule, ScheduleTaskModule, ScheduleModule.forRoot(),],
+  imports: [
+    UserModule,
+    AuthModule,
+    ProjectmangementModule,
+    TaskModule,
+    ColumnModule,
+    NotionModule,
+    ScheduleTaskModule,
+    ScheduleModule.forRoot(),
+  ],
   controllers: [AppController],
   providers: [
     AppService,
